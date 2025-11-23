@@ -3,14 +3,24 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { WalletProvider } from "@/contexts/WalletContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
+import { Navbar } from "@/components/Navbar";
+import Landing from "@/pages/Landing";
+import Onboarding from "@/pages/Onboarding";
+import Marketplace from "@/pages/Marketplace";
+import HosterDashboard from "@/pages/HosterDashboard";
+import DeveloperDashboard from "@/pages/DeveloperDashboard";
 import NotFound from "@/pages/not-found";
 
 function Router() {
   return (
     <Switch>
-      {/* Add pages below */}
-      {/* <Route path="/" component={Home}/> */}
-      {/* Fallback to 404 */}
+      <Route path="/" component={Landing} />
+      <Route path="/onboarding" component={Onboarding} />
+      <Route path="/marketplace" component={Marketplace} />
+      <Route path="/hoster/dashboard" component={HosterDashboard} />
+      <Route path="/developer/dashboard" component={DeveloperDashboard} />
       <Route component={NotFound} />
     </Switch>
   );
@@ -20,8 +30,17 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <Toaster />
-        <Router />
+        <ThemeProvider>
+          <WalletProvider>
+            <div className="min-h-screen flex flex-col">
+              <Navbar />
+              <main className="flex-1">
+                <Router />
+              </main>
+            </div>
+            <Toaster />
+          </WalletProvider>
+        </ThemeProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );
