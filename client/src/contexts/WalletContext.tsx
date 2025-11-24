@@ -1,8 +1,16 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from 'react';
 import { getWallets } from '@massalabs/wallet-provider';
+import type { Provider } from '@massalabs/massa-web3';
 
 interface WalletContextType {
-  provider: any | null;
+  wallet: any | null;
+  accountProvider: Provider | null;
   account: { address: string; name?: string } | null;
   isConnecting: boolean;
   isConnected: boolean;
@@ -13,40 +21,53 @@ interface WalletContextType {
 
 const WalletContext = createContext<WalletContextType | undefined>(undefined);
 
+const isBrowser = typeof window !== 'undefined';
+
 export function WalletProvider({ children }: { children: ReactNode }) {
-  const [provider, setProvider] = useState<any | null>(null);
+  const [wallet, setWallet] = useState<any | null>(null);
+  const [accountProvider, setAccountProvider] = useState<Provider | null>(null);
   const [account, setAccount] = useState<{ address: string; name?: string } | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const connectWallet = async () => {
+    if (!isBrowser) {
+      setError('Wallet connections are only available in the browser.');
+      return;
+    }
+
     setIsConnecting(true);
     setError(null);
 
     try {
       const wallets = await getWallets();
-      
+
       if (wallets.length === 0) {
-        throw new Error('No wallet found. Please install MassaStation or Bearby wallet.');
+        throw new Error('No Massa wallet detected. Install MassaStation or Bearby and refresh.');
       }
 
-      const wallet = wallets[0];
-      
-      const connected = await wallet.connect();
+      const selectedWallet = wallets[0];
+      const connected = await selectedWallet.connect();
       if (!connected) {
         throw new Error('Failed to connect to wallet');
       }
 
-      const accounts = await wallet.accounts();
+      const accounts = await selectedWallet.accounts();
       if (accounts.length === 0) {
         throw new Error('No accounts found in wallet');
       }
 
-      const selectedAccount = accounts[0];
+      const primaryAccount = accounts[0];
 
-      setProvider(wallet);
-      setAccount({ address: selectedAccount.address });
-      localStorage.setItem('walletConnected', 'true');
+      setWallet(selectedWallet);
+      setAccountProvider(primaryAccount);
+      setAccount({
+        address: primaryAccount.address,
+        name: primaryAccount.accountName,
+      });
+      if (isBrowser) {
+        localStorage.setItem('walletConnected', 'true');
+      }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to connect wallet';
       setError(errorMessage);
@@ -57,25 +78,33 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   };
 
   const disconnectWallet = async () => {
-    if (provider && typeof provider.disconnect === 'function') {
-      await provider.disconnect();
+    if (wallet && typeof wallet.disconnect === 'function') {
+      await wallet.disconnect();
     }
-    setProvider(null);
+    setWallet(null);
+    setAccountProvider(null);
     setAccount(null);
-    localStorage.removeItem('walletConnected');
+    if (isBrowser) {
+      localStorage.removeItem('walletConnected');
+    }
   };
 
   useEffect(() => {
+    if (!isBrowser) {
+      return;
+    }
     const wasConnected = localStorage.getItem('walletConnected');
     if (wasConnected === 'true') {
       connectWallet();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
     <WalletContext.Provider
       value={{
-        provider,
+        wallet,
+        accountProvider,
         account,
         isConnecting,
         isConnected: !!account,

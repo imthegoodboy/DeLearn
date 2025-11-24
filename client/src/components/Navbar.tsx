@@ -16,6 +16,8 @@ export function Navbar() {
   const navLinks = [
     { href: '/', label: 'Home' },
     { href: '/marketplace', label: 'Marketplace' },
+    { href: '/docs', label: 'Docs' },
+    { href: '/innovation', label: 'Innovation' },
   ];
 
   const truncateAddress = (address: string) => {

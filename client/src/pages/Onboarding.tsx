@@ -15,6 +15,10 @@ import { useWallet } from '@/contexts/WalletContext';
 import { Megaphone, Code2, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { UserRole, AdCategory } from '@shared/schema';
+import {
+  registerDeveloperOnChain,
+  registerHosterOnChain,
+} from '@/lib/massa-contract';
 
 const categories: AdCategory[] = ['Tech', 'AI', 'Crypto', 'Gaming', 'Finance', 'Education', 'Health', 'Entertainment'];
 
@@ -30,7 +34,7 @@ type OnboardingForm = z.infer<typeof onboardingSchema>;
 
 export default function Onboarding() {
   const [, setLocation] = useLocation();
-  const { account, isConnected } = useWallet();
+  const { account, isConnected, accountProvider } = useWallet();
   const { toast } = useToast();
   const [step, setStep] = useState<'role' | 'details'>('role');
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
@@ -68,7 +72,26 @@ export default function Onboarding() {
 
   const onSubmit = async (data: OnboardingForm) => {
     try {
-      console.log('Onboarding data:', { ...data, role: selectedRole, walletAddress: account?.address });
+      if (!selectedRole) {
+        throw new Error('Select a role before continuing.');
+      }
+      if (!accountProvider) {
+        throw new Error('Connect your wallet before onboarding.');
+      }
+
+      if (selectedRole === 'hoster') {
+        await registerHosterOnChain(accountProvider, {
+          name: data.name,
+          businessName: data.businessName ?? '',
+          categories: selectedCategories,
+        });
+      } else {
+        await registerDeveloperOnChain(accountProvider, {
+          name: data.name,
+          website: data.website ?? '',
+          categories: selectedCategories,
+        });
+      }
       
       toast({
         title: 'Profile created successfully!',

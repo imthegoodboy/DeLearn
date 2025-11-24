@@ -1,0 +1,765 @@
+MASSA DeAds — Fully Decentralized Advertising Network
+
+Think of it like:
+
+Google Ads, but 100% on-chain
+
+No company.
+No servers.
+No censorship.
+No tracking hacks.
+
+Just:
+
+Smart contracts
+
+DeWeb-hosted frontend
+
+Autonomous payments
+
+On-chain ad auctions
+
+Transparent analytics
+
+This is something that only Massa can do because of:
+
+DeWeb hosting
+
+Autonomous Smart Contracts
+
+This will SHOCK the judges.
+
+⭐ WHAT MASSA DeAds DOES (Simple Explanation)
+✔ Anyone can become an Advertiser
+
+They upload:
+
+Their ad (text/image/video)
+
+Budget
+
+Target audience (categories)
+
+✔ Anyone can become a Publisher
+
+Publishers = websites or dApps that want to show ads.
+
+They:
+
+Connect wallet
+
+Register their site
+
+Embed a small JS snippet (hosted on DeWeb)
+
+✔ ASC (Autonomous Smart Contract) handles:
+
+Ad auction
+
+Budget deduction
+
+Payment autopayout
+
+Click tracking (on-chain counters)
+
+Fraud detection
+
+Auto-blocking fake clicks
+
+Scheduled payouts to publishers
+
+No backend. No Google. Only blockchain.
+
+⭐ EXTRA FEATURES (This makes your project BIG)
+🔥 1. On-chain Pay-Per-Click System (PPC)
+
+Advertiser sets a bid:
+
+I pay 0.05 MASSA per click
+
+
+Contract auto-deducts budget when a user clicks.
+
+🔥 2. On-chain Impression-Based Ads (CPM)
+
+Pay per 1000 views.
+
+🔥 3. Fraud Prevention with Proof-of-Click
+
+Contract verifies:
+
+unique wallet
+
+timestamp
+
+IP-hash
+
+no repeated spam
+
+ASC automatically bans suspicious activity.
+
+🔥 4. Reputation Score for Publishers
+
+Publishers earn:
+
+higher score if clicks are genuine
+
+lower score if click fraud detected
+
+High-score publishers get better-paying ads.
+
+🔥 5. AutoPayout Every Day
+
+ASC schedules:
+
+Every 24 hours → send payout to publisher
+
+
+No one needs to manually withdraw.
+
+🔥 6. Ad NFT Marketplace
+
+Each ad campaign = NFT representing:
+
+budget
+
+targeting rules
+
+remaining balance
+
+Advertisers can sell ads to other advertisers.
+
+Unique idea!
+
+⭐ HOW IT WORKS — USER POV (Advertiser)
+🔹 Step 1: Create Account
+
+Connect Massa wallet
+
+Click “I want to Advertise”
+
+🔹 Step 2: Create Ad
+
+Upload:
+
+Image or text
+
+Link
+
+Category (Tech, AI, Gaming, Jobs, Crypto, etc.)
+
+AI model checks formatting (optional).
+
+🔹 Step 3: Set Budget
+
+Example:
+
+Total budget: 50 MASSA
+Bid: 0.05 MASSA per click
+
+
+Funds go to escrow in the contract.
+
+🔹 Step 4: Contract Starts Running
+
+ASC:
+
+Chooses best publisher
+
+Displays ad
+
+Tracks clicks
+
+Deducts budget automatically
+
+🔹 Step 5: View Analytics
+
+Advertiser sees:
+
+Views
+
+Clicks
+
+Cost spent
+
+Targeting performance
+
+All coming from on-chain logs.
+
+🔹 Step 6: Stop Campaign
+
+Refunds unused budget instantly.
+
+⭐ HOW IT WORKS — USER POV (Publisher)
+🔹 Step 1: Register as Publisher
+
+Connect wallet
+
+Add your website link
+
+Describe categories
+
+🔹 Step 2: Get a Script Snippet
+
+Example:
+
+<script src="https://deads.massa/snippet.js"></script>
+
+
+This script:
+
+Calls Massa node
+
+Gets best ad
+
+Displays it on page
+
+🔹 Step 3: Show Ads Automatically
+
+ASC:
+
+Matches ads to your site category
+
+Sends impressions
+
+Sends clicks
+
+🔹 Step 4: Get Paid Daily
+
+ASC runs:
+
+Schedule -> every 24h -> pay publisher earnings
+
+
+Automatic.
+Zero friction.
+
+⭐ HOW IT WORKS — SYSTEM POV (Smart Contract Logic)
+🔹 Contract Stores:
+
+advertiser budgets
+
+publisher reputation
+
+ads metadata
+
+ad categories
+
+bids
+
+impression count
+
+click count
+
+scheduled payouts
+
+🔹 When Ad is Loaded (View)
+
+Action:
+
+function recordImpression(adId, publisher)
+
+
+ASC:
+
+increases impression counter
+
+publishes event
+
+🔹 When User Clicks
+function recordClick(adId, publisher, userHash)
+
+
+ASC checks:
+
+If userHash clicked recently → fraud
+
+If not → valid click
+
+Deducts advertiser balance:
+
+adBudget -= bidPrice
+publisherEarnings += bidPrice
+
+🔹 Daily Payout
+
+ASC triggers automatically:
+
+for each publisher:
+    transfer(publisher, earnings)
+    reset earnings
+
+🔹 Ad Auction Algorithm (Simple Version)
+
+When an ad spot is requested:
+
+Filter ads by category
+
+Sort by bid price
+
+Pick highest bidder
+
+Check that:
+
+ad has budget
+
+advertiser not banned
+
+Return the ad to publisher JS snippet
+
+This is like a decentralized Google Ads auction.
+
+⭐ WEBSITE FLOW (DeWeb)
+🔹 Landing Page
+
+What is DeAds
+
+Why decentralized ads
+
+Basic statistics
+
+🔹 Advertiser Dashboard
+
+Tabs:
+
+Create Campaign
+
+Active Campaigns
+
+Spend Analytics
+
+Remaining Budget
+
+Add Funds
+
+Stop Campaign
+
+🔹 Publisher Dashboard
+
+Tabs:
+
+Register Your Site
+
+Active Ads
+
+Earnings
+
+Payout Schedule
+
+Performance Graph
+
+🔹 Campaign Page
+
+Shows:
+
+Ad preview
+
+Targeting
+
+Max bid
+
+Budget left
+
+Click history (on-chain logs)
+
+🔹 Adminless Dispute System
+
+If advertiser says:
+"Clicks are fake."
+
+ASC checks:
+
+Frequency
+
+Device/hashes
+
+Publisher reputation
+
+Automatic enforcement.
+
+⭐ WHY THIS WINS THE HACKATHON
+✔ 100% autonomous system
+
+Runs forever without any backend.
+
+✔ Real-world usage
+
+Businesses, blogs, creators can use it.
+
+✔ Fits Massa perfectly
+
+DeWeb + ASC = unstoppable ads network.
+
+✔ Very innovative
+
+No other chain has fully on-chain ads.
+
+✔ HUGE potential
+
+This can become a MASS ecosystem product.
+
+
+This platform connects two types of users:
+
+Hoster → The person who uploads ads (advertisers)
+
+Developer → The person who integrates ads into their website/app (publishers)
+
+Both interact through a fully on-chain system powered by Massa’s DeWeb + Smart Contracts.
+
+Below is the complete explanation:
+
+⭐ WHAT DOES OUR APP DO?
+
+Massa DeAds is a decentralized advertising platform where:
+
+Hosters upload ads they want to display (banner ads, video ads, text ads, etc.)
+
+Developers can browse available ads and integrate them into their websites/apps using prebuilt code snippets available in different programming languages.
+
+Our platform acts as a bridge between hosters and developers.
+
+In simple words:
+
+Hosters upload ads → Developers show ads → Developers earn money automatically → All transparent & on-chain.
+
+⭐ HOW THE APP WORKS — FULL FLOW
+
+We have only two roles:
+
+Hoster (Advertiser)
+
+Developer (Publisher)
+
+BOTH follow the same entry flow:
+🔹 Step 1: Sign Up / Sign In
+
+When a user opens the app:
+
+Connect Massa wallet
+
+Choose:
+
+I am a Hoster
+
+I am a Developer
+
+Fill onboarding form:
+
+Name
+
+Email (optional)
+
+Website (if developer)
+
+Business name (if hoster)
+
+Categories (Tech, AI, Crypto, Gaming, etc.)
+
+After onboarding → redirect to their respective dashboard.
+
+⭐ HOSTER DASHBOARD (Advertisers)
+
+This is where users create and manage their ads.
+
+🔥 Features of Hoster Dashboard
+✔ 1. Create New Ad Campaign
+
+Hoster uploads:
+
+Ad Title
+
+Description
+
+Image / Video / HTML snippet
+
+Target Category
+
+Budget
+
+Cost Per Click (CPC) or Cost Per Impression (CPM)
+
+✔ 2. Ad Analytics (On-Chain)
+
+Hoster can see:
+
+Total impressions
+
+Total clicks
+
+Developer sites showing the ad
+
+Money spent
+
+Remaining budget
+
+✔ 3. Edit / Pause / Stop Ad
+
+Hoster can:
+
+Pause ad
+
+Increase budget
+
+Delete ad
+
+Update targeting
+
+✔ 4. Payment & Wallet Section
+
+Shows:
+
+Funds locked in escrow
+
+How much has been consumed
+
+Refund option for unused budget
+
+✔ 5. Chat Support (optional future feature)
+
+Secure decentralized messages with developers.
+
+✔ 6. Ad Verification Level
+
+System checks:
+
+Whether ad is safe (AI-based)
+
+Whether it meets platform rules
+
+Green badge for “Verified Ad”.
+
+⭐ DEVELOPER DASHBOARD (Publishers)
+
+This is where developers find ads to show on their website/app.
+
+🔥 Features of Developer Dashboard
+✔ 1. Available Ads Section
+
+Shows all ads uploaded by hosters:
+
+Category
+
+Type (Image, Banner, Video)
+
+Payment rate (how much dev gets per click/impression)
+
+Preview
+
+Requirements
+
+✔ 2. Earnings Section
+
+Shows:
+
+Total earnings
+
+Daily payout
+
+Click/impression breakdown
+
+Highest-paying ads
+
+Earnings are stored on-chain and auto-paid every 24h via Autonomous Smart Contracts.
+
+✔ 3. Integration Code Snippets
+
+For each ad, developers get code snippets in many languages:
+
+HTML / JavaScript
+
+React
+
+Next.js
+
+Vue
+
+Python (Flask, Django widget)
+
+PHP
+
+Android (WebView)
+
+iOS (SwiftWebView)
+
+Example snippet:
+
+<script src="https://deads.massa/ad/123.js"></script>
+
+
+ASC ensures the JS pulls the correct ad data.
+
+✔ 4. Developer Profile
+
+Contains:
+
+Dev name
+
+Website
+
+Category (Tech, Blog, AI)
+
+Reputation (based on no-fraud behavior)
+
+Total clicks delivered
+
+✔ 5. Ad Performance Tracking
+
+Developers see:
+
+How much each ad earned
+
+Which ad performed best
+
+Monthly graph
+
+✔ 6. Customize Display Settings
+
+Developer can choose:
+
+Ad position (top, bottom, sidebar)
+
+Ad size
+
+Number of ads
+
+⭐ HOW MONEY WORKS
+🔹 Hoster deposits funds → Stored in escrow inside smart contract
+
+Funds are not with us — they are held on-chain.
+
+🔹 Developer earns money automatically
+
+Every valid:
+
+Impression (for CPM ads) or
+
+Click (for CPC ads)
+
+ASC does:
+
+deduct hoster budget
+increase developer earnings
+
+🔹 Daily automatic payouts
+
+Every 24 hours, ASC runs:
+
+transfer(developer, earnings)
+reset developer daily earnings
+
+
+No central authority controls the payouts.
+
+⭐ EXTRA FEATURES (EXPLAINED CLEANLY)
+🔥 1. Fraud Detection
+
+ASC auto-detects:
+
+Double-clicks
+
+Same user doing fake interactions
+
+Suspicious click patterns
+
+If developer is cheating → penalize or block.
+
+🔥 2. Multi-Ad Selection
+
+Developers can choose:
+
+High-paying ad
+
+Relevant category ad
+
+Randomized ad rotation
+
+🔥 3. Ad Marketplace
+
+Ads become NFTs that can be sold to other hosters.
+
+Useful if someone wants to sell ads that are already high-performing.
+
+🔥 4. On-Chain Reputation System
+
+Hoster reputation:
+
+Pays good rates
+
+High-quality ads
+
+No violations
+
+Developer reputation:
+
+No fraud
+
+High-quality traffic
+
+Scores stored on-chain.
+
+🔥 5. Live Preview
+
+Developers can preview how ads will look in their site.
+
+🔥 6. Auto Theme Detection
+
+Ad adapts to website theme:
+
+Light mode
+
+Dark mode
+
+⭐ FULL SYSTEM WORKFLOW (FINAL SUMMARY)
+USER FLOW
+🔹 Hoster:
+
+Sign in → Fill details
+
+Upload ad (image/text/video)
+
+Add budget
+
+Ad goes live in marketplace
+
+Developers integrate it
+
+Hoster sees clicks/impressions
+
+Budget decreases automatically
+
+Can stop, edit, or pause campaign
+
+🔹 Developer:
+
+Sign in → Add website/app details
+
+Browse available ads
+
+Click on an ad → see details & payout
+
+Copy integration code
+
+Paste into website/app
+
+Earn MASSA automatically
+
+Daily payouts via ASC
+
+Track earnings & stats
+
+SMART CONTRACT FLOW
+
+Store ad details
+
+Store budgets
+
+Track impressions & clicks
+
+Automatic budget deduction
+
+Automatic payout scheduling
+
+Fraud detection
+
+Reputation scoring

@@ -12,6 +12,8 @@ import Marketplace from "@/pages/Marketplace";
 import HosterDashboard from "@/pages/HosterDashboard";
 import DeveloperDashboard from "@/pages/DeveloperDashboard";
 import NotFound from "@/pages/not-found";
+import InnovationHub from "@/pages/InnovationHub";
+import Docs from "@/pages/Docs";
 
 function Router() {
   return (
@@ -21,6 +23,8 @@ function Router() {
       <Route path="/marketplace" component={Marketplace} />
       <Route path="/hoster/dashboard" component={HosterDashboard} />
       <Route path="/developer/dashboard" component={DeveloperDashboard} />
+      <Route path="/innovation" component={InnovationHub} />
+      <Route path="/docs" component={Docs} />
       <Route component={NotFound} />
     </Switch>
   );

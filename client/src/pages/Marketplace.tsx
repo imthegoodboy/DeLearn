@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -8,6 +9,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { CodeSnippetGenerator } from '@/components/CodeSnippetGenerator';
 import { Search, Filter, Code } from 'lucide-react';
 import type { AdCampaign, AdCategory } from '@shared/schema';
+import { fetchCampaigns } from '@/lib/massa-contract';
+import { contractConfigured } from '@/lib/massa-contract';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const categories: AdCategory[] = ['Tech', 'AI', 'Crypto', 'Gaming', 'Finance', 'Education', 'Health', 'Entertainment'];
 
@@ -17,99 +21,21 @@ export default function Marketplace() {
   const [selectedAd, setSelectedAd] = useState<AdCampaign | null>(null);
   const [showIntegrationModal, setShowIntegrationModal] = useState(false);
 
-  const [availableAds] = useState<AdCampaign[]>([
-    {
-      id: '1',
-      hosterId: 'host1',
-      title: 'Premium Crypto Trading Platform',
-      description: 'Trade cryptocurrencies with zero fees. Advanced charts, real-time data, and secure wallet integration.',
-      imageUrl: '',
-      videoUrl: null,
-      htmlSnippet: null,
-      category: 'Crypto',
-      targetUrl: 'https://example.com',
-      budget: 1000,
-      spent: 450,
-      costPerClick: 0.15,
-      costPerImpression: null,
-      pricingModel: 'cpc',
-      status: 'active',
-      impressions: 125000,
-      clicks: 3500,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-    {
-      id: '2',
-      hosterId: 'host2',
-      title: 'AI-Powered Analytics Tool',
-      description: 'Transform your data into insights with our AI-powered analytics platform. Real-time dashboards and predictions.',
-      imageUrl: '',
-      videoUrl: null,
-      htmlSnippet: null,
-      category: 'AI',
-      targetUrl: 'https://example.com',
-      budget: 500,
-      spent: 200,
-      costPerClick: null,
-      costPerImpression: 0.002,
-      pricingModel: 'cpm',
-      status: 'active',
-      impressions: 85000,
-      clicks: 1200,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-    {
-      id: '3',
-      hosterId: 'host3',
-      title: 'Blockchain Gaming Platform',
-      description: 'Play-to-earn gaming with true asset ownership. Join thousands of players earning crypto while gaming.',
-      imageUrl: '',
-      videoUrl: null,
-      htmlSnippet: null,
-      category: 'Gaming',
-      targetUrl: 'https://example.com',
-      budget: 750,
-      spent: 320,
-      costPerClick: 0.12,
-      costPerImpression: null,
-      pricingModel: 'cpc',
-      status: 'active',
-      impressions: 95000,
-      clicks: 2100,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-    {
-      id: '4',
-      hosterId: 'host4',
-      title: 'DeFi Yield Optimizer',
-      description: 'Maximize your DeFi yields with automated strategies. Stake, farm, and earn with optimal returns.',
-      imageUrl: '',
-      videoUrl: null,
-      htmlSnippet: null,
-      category: 'Finance',
-      targetUrl: 'https://example.com',
-      budget: 600,
-      spent: 180,
-      costPerClick: 0.18,
-      costPerImpression: null,
-      pricingModel: 'cpc',
-      status: 'active',
-      impressions: 68000,
-      clicks: 1500,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-  ]);
-
-  const filteredAds = availableAds.filter(ad => {
-    const matchesSearch = ad.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      ad.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = selectedCategory === 'all' || ad.category === selectedCategory;
-    return matchesSearch && matchesCategory;
+  const { data: allAds = [], isFetching } = useQuery({
+    queryKey: ['campaigns', 'marketplace'],
+    queryFn: () => fetchCampaigns({ limit: 80, status: 'active' }),
   });
+
+  const filteredAds = useMemo(() => {
+    return allAds.filter((ad) => {
+      const matchesSearch =
+        ad.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        ad.description.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesCategory =
+        selectedCategory === 'all' || ad.category === selectedCategory;
+      return matchesSearch && matchesCategory;
+    });
+  }, [allAds, searchQuery, selectedCategory]);
 
   const handleIntegrate = (ad: AdCampaign) => {
     setSelectedAd(ad);
@@ -138,6 +64,13 @@ export default function Marketplace() {
         </div>
 
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
+          {!contractConfigured && (
+            <Alert className="mb-6">
+              <AlertDescription>
+                Smart contract not configured – showing curated campaigns so you can still explore the flow.
+              </AlertDescription>
+            </Alert>
+          )}
           <Card>
             <CardHeader>
               <CardTitle>Available Campaigns</CardTitle>
@@ -146,6 +79,11 @@ export default function Marketplace() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
+              {isFetching && (
+                <p className="text-sm text-muted-foreground">
+                  Loading on-chain campaigns...
+                </p>
+              )}
               <div className="flex flex-col sm:flex-row gap-4">
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />

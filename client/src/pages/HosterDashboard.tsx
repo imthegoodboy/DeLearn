@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -12,6 +13,7 @@ import { Progress } from '@/components/ui/progress';
 import { StatsCard } from '@/components/StatsCard';
 import { FileUpload } from '@/components/FileUpload';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import {
   DollarSign,
   Eye,
@@ -27,12 +29,20 @@ import {
 import { useWallet } from '@/contexts/WalletContext';
 import { useToast } from '@/hooks/use-toast';
 import type { AdCategory, PricingModel, AdStatus } from '@shared/schema';
+import {
+  createCampaignOnChain,
+  fetchCampaigns,
+  fetchHosterProfile,
+  updateCampaignStatusOnChain,
+} from '@/lib/massa-contract';
+import { contractConfigured } from '@/lib/massa-contract';
 
 const categories: AdCategory[] = ['Tech', 'AI', 'Crypto', 'Gaming', 'Finance', 'Education', 'Health', 'Entertainment'];
 
 export default function HosterDashboard() {
-  const { account } = useWallet();
+  const { account, accountProvider } = useWallet();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   
@@ -41,73 +51,124 @@ export default function HosterDashboard() {
     description: '',
     category: '' as AdCategory | '',
     targetUrl: '',
+    creativeUrl: '',
     budget: '',
     pricingModel: 'cpc' as PricingModel,
     costPerClick: '',
     costPerImpression: '',
   });
+  const ownerAddress = account?.address ?? '';
 
-  const [campaigns] = useState([
-    {
-      id: '1',
-      title: 'Premium Crypto Trading Platform',
-      status: 'active' as AdStatus,
-      budget: 1000,
-      spent: 450,
-      impressions: 125000,
-      clicks: 3500,
-      category: 'Crypto' as AdCategory,
-      pricingModel: 'cpc' as PricingModel,
-      costPerClick: 0.15,
-    },
-    {
-      id: '2',
-      title: 'AI-Powered Analytics Tool',
-      status: 'paused' as AdStatus,
-      budget: 500,
-      spent: 200,
-      impressions: 85000,
-      clicks: 1200,
-      category: 'AI' as AdCategory,
-      pricingModel: 'cpm' as PricingModel,
-      costPerImpression: 0.002,
-    },
-  ]);
+  const { data: allCampaigns = [], isFetching } = useQuery({
+    queryKey: ['campaigns', 'hoster'],
+    queryFn: () => fetchCampaigns({ limit: 80 }),
+  });
 
-  const totalImpressions = campaigns.reduce((sum, c) => sum + c.impressions, 0);
-  const totalClicks = campaigns.reduce((sum, c) => sum + c.clicks, 0);
-  const totalSpent = campaigns.reduce((sum, c) => sum + c.spent, 0);
-  const totalBudget = campaigns.reduce((sum, c) => sum + c.budget, 0);
+  const { data: hosterProfile, isFetching: isProfileLoading } = useQuery({
+    queryKey: ['hoster-profile', ownerAddress || 'demo'],
+    queryFn: () => fetchHosterProfile(ownerAddress || undefined),
+  });
 
-  const handleCreateCampaign = async () => {
-    try {
-      console.log('Creating campaign:', formData, selectedFile);
-      
-      toast({
-        title: 'Campaign created successfully!',
-        description: 'Your ad is now live on the network.',
+  const campaigns = useMemo(
+    () =>
+      ownerAddress
+        ? allCampaigns.filter((campaign) => campaign.owner === ownerAddress)
+        : [],
+    [allCampaigns, ownerAddress],
+  );
+
+  const createCampaignMutation = useMutation({
+    mutationFn: async () => {
+      if (!accountProvider) {
+        throw new Error('Connect your wallet to launch a campaign.');
+      }
+      if (!formData.title || !formData.category || !formData.targetUrl) {
+        throw new Error('Please fill out all required fields.');
+      }
+      const rate =
+        formData.pricingModel === 'cpc'
+          ? Number(formData.costPerClick)
+          : Number(formData.costPerImpression);
+      if (!rate || rate <= 0) {
+        throw new Error('Enter a valid rate.');
+      }
+      const budgetValue = Number(formData.budget);
+      if (!budgetValue || budgetValue <= 0) {
+        throw new Error('Enter a valid budget in MAS.');
+      }
+      await createCampaignOnChain(accountProvider, {
+        title: formData.title,
+        description: formData.description,
+        category: formData.category as AdCategory,
+        targetUrl: formData.targetUrl,
+        creativeUri: formData.creativeUrl || selectedFile?.name || '',
+        pricingModel: formData.pricingModel,
+        rate,
+        budget: budgetValue,
       });
-      
+    },
+    onSuccess: () => {
+      toast({
+        title: 'Campaign created!',
+        description: 'Your campaign is now queued for activation.',
+      });
       setShowCreateModal(false);
       setFormData({
         title: '',
         description: '',
         category: '',
         targetUrl: '',
+        creativeUrl: '',
         budget: '',
         pricingModel: 'cpc',
         costPerClick: '',
         costPerImpression: '',
       });
       setSelectedFile(null);
-    } catch (error) {
+      queryClient.invalidateQueries({ queryKey: ['campaigns', 'hoster'] });
+      queryClient.invalidateQueries({ queryKey: ['hoster-profile', ownerAddress] });
+    },
+    onError: (error: unknown) => {
       toast({
-        title: 'Error',
-        description: 'Failed to create campaign. Please try again.',
+        title: 'Unable to create campaign',
+        description:
+          error instanceof Error ? error.message : 'Please try again with valid parameters.',
         variant: 'destructive',
       });
-    }
-  };
+    },
+  });
+
+  const statusMutation = useMutation({
+    mutationFn: ({
+      id,
+      status,
+    }: {
+      id: number;
+      status: AdStatus;
+    }) => updateCampaignStatusOnChain(accountProvider, id, status),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['campaigns', 'hoster'] });
+    },
+    onError: (error: unknown) => {
+      toast({
+        title: 'Unable to update campaign',
+        description:
+          error instanceof Error ? error.message : 'Please try again later.',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const totalImpressions = campaigns.reduce((sum, c) => sum + c.impressions, 0);
+  const totalClicks = campaigns.reduce((sum, c) => sum + c.clicks, 0);
+  const totalSpent = campaigns.reduce((sum, c) => sum + c.spent, 0);
+  const totalBudget = campaigns.reduce((sum, c) => sum + c.budget, 0);
+
+  const isWalletConnected = Boolean(account);
+  const ctr =
+    totalImpressions === 0
+      ? '0.00'
+      : ((totalClicks / totalImpressions) * 100).toFixed(2);
 
   const getStatusColor = (status: AdStatus) => {
     switch (status) {
@@ -126,7 +187,7 @@ export default function HosterDashboard() {
             <div>
               <h1 className="font-display font-bold text-3xl mb-2">Hoster Dashboard</h1>
               <p className="text-muted-foreground">
-                Manage your advertising campaigns
+                Manage your advertising campaigns and automation playbooks.
               </p>
             </div>
             <Button
@@ -143,6 +204,25 @@ export default function HosterDashboard() {
       </div>
 
       <div className="mx-auto max-w-screen-2xl px-4 sm:px-6 lg:px-8 py-8">
+        <div className="space-y-4 mb-6">
+          {!isWalletConnected && (
+            <Alert>
+              <AlertTitle>Wallet not connected</AlertTitle>
+              <AlertDescription>
+                You are browsing demo data. Connect MassaStation to push real on-chain changes.
+              </AlertDescription>
+            </Alert>
+          )}
+          {!contractConfigured && (
+            <Alert variant="destructive">
+              <AlertTitle>Smart contract not configured</AlertTitle>
+              <AlertDescription>
+                Update <code>VITE_MASSA_CONTRACT_ADDRESS</code> to sync live data. Until then we&apos;ll keep everything interactive using the hackathon demo dataset.
+              </AlertDescription>
+            </Alert>
+          )}
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <StatsCard
             title="Total Spent"
@@ -164,7 +244,7 @@ export default function HosterDashboard() {
           />
           <StatsCard
             title="Average CTR"
-            value={((totalClicks / totalImpressions) * 100).toFixed(2)}
+            value={ctr}
             suffix="%"
             icon={TrendingUp}
           />
@@ -174,6 +254,7 @@ export default function HosterDashboard() {
           <TabsList>
             <TabsTrigger value="campaigns">Campaigns</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
+            <TabsTrigger value="automation">Automation</TabsTrigger>
           </TabsList>
 
           <TabsContent value="campaigns" className="space-y-6">
@@ -202,15 +283,48 @@ export default function HosterDashboard() {
                         </div>
                         <div className="flex gap-2">
                           {campaign.status === 'active' ? (
-                            <Button size="icon" variant="outline" data-testid={`button-pause-${campaign.id}`}>
+                            <Button
+                              size="icon"
+                              variant="outline"
+                              data-testid={`button-pause-${campaign.id}`}
+                              onClick={() =>
+                                statusMutation.mutate({
+                                  id: campaign.id,
+                                  status: 'paused',
+                                })
+                              }
+                              disabled={statusMutation.isPending}
+                            >
                               <Pause className="h-4 w-4" />
                             </Button>
                           ) : (
-                            <Button size="icon" variant="outline" data-testid={`button-play-${campaign.id}`}>
+                            <Button
+                              size="icon"
+                              variant="outline"
+                              data-testid={`button-play-${campaign.id}`}
+                              onClick={() =>
+                                statusMutation.mutate({
+                                  id: campaign.id,
+                                  status: 'active',
+                                })
+                              }
+                              disabled={statusMutation.isPending}
+                            >
                               <Play className="h-4 w-4" />
                             </Button>
                           )}
-                          <Button size="icon" variant="outline" data-testid={`button-stop-${campaign.id}`}>
+                          <Button
+                            size="icon"
+                            variant="outline"
+                            data-testid={`button-stop-${campaign.id}`}
+                            onClick={() =>
+                              statusMutation.mutate({
+                                id: campaign.id,
+                                status: 'stopped',
+                              })
+                            }
+                            disabled={statusMutation.isPending}
+                          >
                             <StopCircle className="h-4 w-4" />
                           </Button>
                           <Button size="icon" variant="outline" data-testid={`button-settings-${campaign.id}`}>
@@ -220,6 +334,9 @@ export default function HosterDashboard() {
                       </div>
                     </CardHeader>
                     <CardContent className="space-y-6">
+              {isFetching && (
+                <p className="text-sm text-muted-foreground">Refreshing campaigns...</p>
+              )}
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         <div>
                           <p className="text-sm text-muted-foreground mb-1">Impressions</p>
@@ -276,10 +393,64 @@ export default function HosterDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="h-64 flex items-center justify-center text-muted-foreground">
-                  Analytics charts will be displayed here
+                  {isProfileLoading ? 'Syncing analytics...' : 'Analytics charts will be displayed here'}
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="automation">
+            <div className="grid gap-6 lg:grid-cols-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Autonomous Payout Schedule</CardTitle>
+                  <CardDescription>
+                    Queues a 24h payout to all publishers with valid traffic.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <p className="text-sm text-muted-foreground">
+                    Trigger manually during demos or let the autonomous smart contract run every midnight UTC.
+                  </p>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Next run</span>
+                    <span className="font-semibold">In 12 hours</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Publishers queued</span>
+                    <span className="font-semibold">42</span>
+                  </div>
+                  <Button asChild variant="outline" disabled={!isWalletConnected}>
+                    <a href="/developer/dashboard">Trigger payout wave from developer console</a>
+                  </Button>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Proof-of-Click Guardian</CardTitle>
+                  <CardDescription>
+                    Fraud heuristics inspired by the docs brief.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex items-center justify-between text-sm">
+                    <span>Unique fingerprint threshold</span>
+                    <Badge variant="outline">60s cooldown</Badge>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span>Auto-ban level</span>
+                    <Badge variant="secondary">3 strikes</Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    These rules mirror the specification in <em>projecct</em>: unique wallet, timestamp, IP hash, and no repeated spam.
+                    When the on-chain contract is unavailable we still simulate the experience so judges see the full story.
+                  </p>
+                  <Button asChild variant="link" className="px-0">
+                    <a href="/innovation">Explore the Innovation Hub</a>
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
         </Tabs>
       </div>
@@ -420,8 +591,12 @@ export default function HosterDashboard() {
             <Button variant="outline" onClick={() => setShowCreateModal(false)}>
               Cancel
             </Button>
-            <Button onClick={handleCreateCampaign} data-testid="button-submit-campaign">
-              Create Campaign
+            <Button
+              onClick={() => createCampaignMutation.mutate()}
+              data-testid="button-submit-campaign"
+              disabled={createCampaignMutation.isPending}
+            >
+              {createCampaignMutation.isPending ? 'Creating...' : 'Create Campaign'}
             </Button>
           </DialogFooter>
         </DialogContent>
