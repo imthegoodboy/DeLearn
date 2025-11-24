@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocation } from 'wouter';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useWallet } from '@/contexts/WalletContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { Megaphone, Code2, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { UserRole, AdCategory } from '@shared/schema';
@@ -34,27 +35,30 @@ type OnboardingForm = z.infer<typeof onboardingSchema>;
 
 export default function Onboarding() {
   const [, setLocation] = useLocation();
-  const { account, isConnected, accountProvider } = useWallet();
+  const { accountProvider } = useWallet();
+  const { user } = useAuth();
   const { toast } = useToast();
-  const [step, setStep] = useState<'role' | 'details'>('role');
-  const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
+  const [step, setStep] = useState<'role' | 'details'>(user?.role ? 'details' : 'role');
+  const [selectedRole, setSelectedRole] = useState<UserRole | null>(user?.role ?? null);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
   const form = useForm<OnboardingForm>({
     resolver: zodResolver(onboardingSchema),
     defaultValues: {
-      name: '',
-      email: '',
+      name: user?.name ?? '',
+      email: user?.email ?? '',
       website: '',
       businessName: '',
       categories: [],
     },
   });
 
-  if (!isConnected) {
-    setLocation('/');
-    return null;
-  }
+  useEffect(() => {
+    if (user?.role) {
+      setSelectedRole(user.role);
+      setStep('details');
+    }
+  }, [user]);
 
   const handleRoleSelect = (role: UserRole) => {
     setSelectedRole(role);
@@ -75,10 +79,6 @@ export default function Onboarding() {
       if (!selectedRole) {
         throw new Error('Select a role before continuing.');
       }
-      if (!accountProvider) {
-        throw new Error('Connect your wallet before onboarding.');
-      }
-
       if (selectedRole === 'hoster') {
         await registerHosterOnChain(accountProvider, {
           name: data.name,

@@ -15,12 +15,8 @@ import type {
   RegisterDeveloperInput,
   RegisterHosterInput,
 } from '@shared/schema';
-import {
-  sampleCampaigns,
-  sampleDeveloper,
-  sampleHoster,
-  sampleStats,
-} from '@/data/sampleData';
+// For production we avoid shipping obvious demo/sample data.
+// When the contract is not configured the UI will display neutral placeholders or empty lists.
 import { masToNano, nanoToMasNumber } from './units';
 
 const CONTRACT_ADDRESS = import.meta.env.VITE_MASSA_CONTRACT_ADDRESS;
@@ -153,22 +149,39 @@ function decodeDeveloper(args: Args): DeveloperProfile {
 }
 
 function cloneCampaigns(): AdCampaign[] {
-  return sampleCampaigns.map((campaign) => ({ ...campaign }));
+  // Return an empty list when no contract is configured to avoid showing demo campaigns.
+  return [];
 }
 
 function fallbackHoster(address?: string): HosterProfile {
   return {
-    ...sampleHoster,
-    address: address ?? sampleHoster.address,
-    categories: [...sampleHoster.categories],
+    address: address ?? '',
+    name: '',
+    businessName: '',
+    categories: [],
+    totalBudget: 0,
+    totalSpent: 0,
+    activeCampaigns: 0,
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
   };
 }
 
 function fallbackDeveloper(address?: string): DeveloperProfile {
   return {
-    ...sampleDeveloper,
-    address: address ?? sampleDeveloper.address,
-    categories: [...sampleDeveloper.categories],
+    address: address ?? '',
+    name: '',
+    website: '',
+    categories: [],
+    reputation: 0,
+    impressions: 0,
+    clicks: 0,
+    pendingPayout: 0,
+    lifetimeEarnings: 0,
+    lastPayoutAt: 0,
+    fraudCount: 0,
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
   };
 }
 
@@ -244,7 +257,16 @@ export async function fetchPlatformStats(): Promise<PlatformStats> {
       impressions: Number(payload.nextU64()),
       clicks: Number(payload.nextU64()),
     };
-  }, () => ({ ...sampleStats }));
+  }, () => ({
+    hosters: 0,
+    developers: 0,
+    campaigns: 0,
+    activeCampaigns: 0,
+    lockedBudget: 0,
+    spent: 0,
+    impressions: 0,
+    clicks: 0,
+  }));
 }
 
 function ensureAccount(provider: Provider | null | undefined): Provider {

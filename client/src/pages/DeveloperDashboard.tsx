@@ -32,7 +32,6 @@ import {
   triggerScheduledPayoutsOnChain,
 } from '@/lib/massa-contract';
 import { contractConfigured } from '@/lib/massa-contract';
-import { sampleDeveloper } from '@/data/sampleData';
 
 const categories: AdCategory[] = ['Tech', 'AI', 'Crypto', 'Gaming', 'Finance', 'Education', 'Health', 'Entertainment'];
 
@@ -147,15 +146,15 @@ export default function DeveloperDashboard() {
             <Alert>
               <AlertTitle>Wallet not connected</AlertTitle>
               <AlertDescription>
-                You&apos;re browsing the interactive demo dataset. Connect your Massa wallet to pull live earnings.
+                Connect your Massa wallet to view live earnings and interact with on-chain features.
               </AlertDescription>
             </Alert>
           )}
           {!contractConfigured && (
             <Alert variant="destructive">
-              <AlertTitle>Smart contract unavailable</AlertTitle>
+              <AlertTitle>Smart contract not configured</AlertTitle>
               <AlertDescription>
-                Configure <code>VITE_MASSA_CONTRACT_ADDRESS</code> once the contract is deployed. Everything else keeps working in demo mode so the judges can evaluate the UX end-to-end.
+                The smart contract address is not configured. Set <code>VITE_MASSA_CONTRACT_ADDRESS</code> to connect this UI to a deployed contract. Until then, some content may display placeholder values.
               </AlertDescription>
             </Alert>
           )}
@@ -315,7 +314,7 @@ export default function DeveloperDashboard() {
               <CardContent>
                 <div className="space-y-4">
                   {isProfileLoading ? (
-                    <p className="text-sm text-muted-foreground">Loading demo earnings...</p>
+                    <p className="text-sm text-muted-foreground">Loading earnings...</p>
                   ) : (
                     earningsBreakdown.map((earning, index) => (
                       <motion.div

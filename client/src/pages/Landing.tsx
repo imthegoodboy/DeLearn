@@ -18,9 +18,11 @@ import {
 import { useWallet } from '@/contexts/WalletContext';
 import { useState } from 'react';
 import { WalletConnectionModal } from '@/components/WalletConnectionModal';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function Landing() {
   const { isConnected } = useWallet();
+  const { isAuthenticated, user } = useAuth();
   const [showWalletModal, setShowWalletModal] = useState(false);
 
   const features = [
@@ -102,31 +104,42 @@ export default function Landing() {
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-                {isConnected ? (
+                {isAuthenticated ? (
                   <>
-                    <Link href="/onboarding?role=hoster">
-                      <Button size="lg" className="text-lg px-8 py-6 gap-2 bg-gradient-to-r from-primary to-primary/80" data-testid="button-hoster">
-                        I'm a Hoster
+                    <Link href={user?.role === 'hoster' ? '/hoster/dashboard' : '/developer/dashboard'}>
+                      <Button size="lg" className="text-lg px-8 py-6 gap-2 bg-gradient-to-r from-primary to-primary/80">
+                        Enter {user?.role === 'hoster' ? 'Hoster' : 'Developer'} Dashboard
                         <ArrowRight className="h-5 w-5" />
                       </Button>
                     </Link>
-                    <Link href="/onboarding?role=developer">
-                      <Button size="lg" variant="outline" className="text-lg px-8 py-6 gap-2" data-testid="button-developer">
-                        I'm a Developer
-                        <ArrowRight className="h-5 w-5" />
+                    <Link href="/docs">
+                      <Button size="lg" variant="outline" className="text-lg px-8 py-6 gap-2">
+                        Read Docs
                       </Button>
                     </Link>
                   </>
                 ) : (
-                  <Button
-                    size="lg"
-                    onClick={() => setShowWalletModal(true)}
-                    className="text-lg px-8 py-6 gap-2 bg-gradient-to-r from-primary to-primary/80"
-                    data-testid="button-get-started"
-                  >
-                    <Wallet className="h-5 w-5" />
-                    Connect Wallet to Get Started
-                  </Button>
+                  <>
+                    <Link href="/auth/login">
+                      <Button
+                        size="lg"
+                        className="text-lg px-8 py-6 gap-2 bg-gradient-to-r from-primary to-primary/80"
+                        data-testid="button-get-started"
+                      >
+                        <ArrowRight className="h-5 w-5" />
+                        Sign in to Continue
+                      </Button>
+                    </Link>
+                    <Button
+                      size="lg"
+                      variant="outline"
+                      onClick={() => setShowWalletModal(true)}
+                      className="text-lg px-8 py-6 gap-2"
+                    >
+                      <Wallet className="h-5 w-5" />
+                      Connect Wallet
+                    </Button>
+                  </>
                 )}
               </div>
             </motion.div>

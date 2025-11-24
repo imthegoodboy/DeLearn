@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/card';
 import Prism from 'prismjs';
 import 'prismjs/components/prism-javascript';
 import 'prismjs/components/prism-jsx';
+import 'prismjs/components/prism-markup';
 import 'prismjs/components/prism-python';
 import 'prismjs/components/prism-php';
 import { useEffect, useRef } from 'react';
@@ -118,11 +119,29 @@ echo $adWidget;
       if (element) {
         const code = element.querySelector('code');
         if (code) {
-          Prism.highlightElement(code);
+          try {
+            // Prefer highlightElement (works with DOM nodes/plugins)
+            // but fall back to highlight() if something in Prism plugins
+            // isn't available in the runtime.
+            Prism.highlightElement(code as HTMLElement);
+          } catch (err) {
+            try {
+              const mappedLang =
+                lang === 'html' ? 'markup' : lang === 'nextjs' || lang === 'react' ? 'jsx' : lang;
+              const text = code.textContent || code.innerText || '';
+              // @ts-ignore - Prism typings are sometimes incomplete
+              Prism.highlight(text, (Prism.languages as any)[mappedLang] || Prism.languages.markup, mappedLang);
+            } catch (err2) {
+              // swallow - highlighting failure should not break the page
+              // but log to console for debugging
+              // eslint-disable-next-line no-console
+              console.error('Prism highlight failed', err2);
+            }
+          }
         }
       }
     });
-  }, []);
+  }, [adId]);
 
   const copyToClipboard = async (text: string, tab: string) => {
     try {

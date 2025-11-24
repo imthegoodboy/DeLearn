@@ -209,7 +209,7 @@ export default function HosterDashboard() {
             <Alert>
               <AlertTitle>Wallet not connected</AlertTitle>
               <AlertDescription>
-                You are browsing demo data. Connect MassaStation to push real on-chain changes.
+                Connect your Massa wallet to publish campaigns and sign transactions.
               </AlertDescription>
             </Alert>
           )}
@@ -217,7 +217,7 @@ export default function HosterDashboard() {
             <Alert variant="destructive">
               <AlertTitle>Smart contract not configured</AlertTitle>
               <AlertDescription>
-                Update <code>VITE_MASSA_CONTRACT_ADDRESS</code> to sync live data. Until then we&apos;ll keep everything interactive using the hackathon demo dataset.
+                Set <code>VITE_MASSA_CONTRACT_ADDRESS</code> to connect this UI to your deployed smart contract. Some UI elements may show placeholder values until configured.
               </AlertDescription>
             </Alert>
           )}
@@ -410,7 +410,7 @@ export default function HosterDashboard() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <p className="text-sm text-muted-foreground">
-                    Trigger manually during demos or let the autonomous smart contract run every midnight UTC.
+                    Trigger manually or allow the autonomous smart contract to run scheduled payouts every 24 hours.
                   </p>
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">Next run</span>
@@ -441,10 +441,9 @@ export default function HosterDashboard() {
                     <span>Auto-ban level</span>
                     <Badge variant="secondary">3 strikes</Badge>
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    These rules mirror the specification in <em>projecct</em>: unique wallet, timestamp, IP hash, and no repeated spam.
-                    When the on-chain contract is unavailable we still simulate the experience so judges see the full story.
-                  </p>
+                    <p className="text-sm text-muted-foreground">
+                      These rules mirror the specification in <em>projecct</em>: unique wallet, timestamp, IP hash, and protection against repeated spam.
+                    </p>
                   <Button asChild variant="link" className="px-0">
                     <a href="/innovation">Explore the Innovation Hub</a>
                   </Button>

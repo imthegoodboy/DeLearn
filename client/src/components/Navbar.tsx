@@ -1,15 +1,25 @@
 import { Link, useLocation } from 'wouter';
-import { Wallet, Menu, X } from 'lucide-react';
+import { Wallet, Menu, X, User2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from './ThemeToggle';
 import { useWallet } from '@/contexts/WalletContext';
 import { WalletConnectionModal } from './WalletConnectionModal';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '@/contexts/AuthContext';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 export function Navbar() {
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
   const { account, isConnected, disconnectWallet } = useWallet();
+  const { user, isAuthenticated, logout } = useAuth();
   const [showWalletModal, setShowWalletModal] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -19,6 +29,13 @@ export function Navbar() {
     { href: '/docs', label: 'Docs' },
     { href: '/innovation', label: 'Innovation' },
   ];
+
+  const dashboardHref =
+    user?.role === 'hoster'
+      ? '/hoster/dashboard'
+      : user?.role === 'developer'
+        ? '/developer/dashboard'
+        : '/auth/login';
 
   const truncateAddress = (address: string) => {
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
@@ -59,7 +76,44 @@ export function Navbar() {
 
             <div className="flex items-center gap-2">
               <ThemeToggle />
-              
+
+              {isAuthenticated ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="hidden md:flex items-center gap-2">
+                      <User2 className="h-4 w-4" />
+                      <div className="flex flex-col text-left">
+                        <span className="text-sm font-semibold leading-tight">{user?.name}</span>
+                        <span className="text-xs text-muted-foreground capitalize">{user?.role}</span>
+                      </div>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-60">
+                    <DropdownMenuLabel>
+                      <div className="flex flex-col">
+                        <span>{user?.name}</span>
+                        <span className="text-xs font-normal text-muted-foreground">{user?.email}</span>
+                      </div>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onSelect={() => setLocation(dashboardHref)}>
+                      Go to dashboard
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setLocation('/docs')}>
+                      Open docs
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem className="text-destructive focus:text-destructive" onSelect={logout}>
+                      Log out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <Button variant="outline" className="hidden md:flex" onClick={() => setLocation('/auth/login')}>
+                  Sign in
+                </Button>
+              )}
+
               {isConnected ? (
                 <div className="hidden md:flex items-center gap-2">
                   <div className="px-4 py-2 rounded-lg bg-secondary text-secondary-foreground font-mono text-sm">
@@ -121,6 +175,25 @@ export function Navbar() {
                   </Link>
                 ))}
                 
+                {isAuthenticated ? (
+                  <>
+                    <div className="px-4 py-2 rounded-lg bg-secondary text-secondary-foreground">
+                      <p className="font-semibold">{user?.name}</p>
+                      <p className="text-xs text-muted-foreground">{user?.email}</p>
+                    </div>
+                    <Button className="w-full" onClick={() => { setMobileMenuOpen(false); setLocation(dashboardHref); }}>
+                      My Dashboard
+                    </Button>
+                    <Button variant="outline" className="w-full" onClick={() => { logout(); setMobileMenuOpen(false); }}>
+                      Logout
+                    </Button>
+                  </>
+                ) : (
+                  <Button className="w-full" variant="outline" onClick={() => { setMobileMenuOpen(false); setLocation('/auth/login'); }}>
+                    Sign in
+                  </Button>
+                )}
+
                 {isConnected ? (
                   <>
                     <div className="px-4 py-2 rounded-lg bg-secondary text-secondary-foreground font-mono text-sm">
