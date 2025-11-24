@@ -143,8 +143,101 @@ export default function Docs() {
             </div>
           </CardContent>
         </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Developer Integration Guide (Deep Dive)</CardTitle>
+            <CardDescription>
+              A long-form reference for publishers and integrators — how to embed the widget, verify impressions/clicks, and understand on-chain behavior.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <h3 className="font-semibold">What this file contains</h3>
+            <p className="text-sm text-muted-foreground">
+              This guide explains: the available integration snippets, expected on-chain events, local testing tips, fraud protections, and how Massa is used to make everything trustless.
+            </p>
+
+            <h4 className="font-semibold">1) Integration options</h4>
+            <p className="text-sm text-muted-foreground">
+              We provide ready-to-copy code for multiple environments. Pick one and paste into your site. The simplest option is the single script tag which dynamically requests an ad and renders it inside a container.
+            </p>
+
+            <pre className="rounded-lg bg-muted p-3 text-sm overflow-x-auto">
+              <code>{`<!-- HTML/JS snippet -->
+<div id="massa-ad-123"></div>
+<script src="https://deads.massa.net/sdk.js"></script>
+<script>
+  MassaAds.display('123', { container: 'massa-ad-123' });
+</script>`}</code>
+            </pre>
+
+            <h4 className="font-semibold">2) React / SPA integration</h4>
+            <p className="text-sm text-muted-foreground">
+              Use the `MassaAd` React component to render ads inside your React app. It handles hydration and avoids double-rendering in SSR frameworks.
+            </p>
+
+            <pre className="rounded-lg bg-muted p-3 text-sm overflow-x-auto">
+              <code>{`import { MassaAd } from '@massa-deads/react';
+
+function MyComponent(){
+  return <MassaAd adId="123" position="center" />;
+}`}</code>
+            </pre>
+
+            <h4 className="font-semibold">3) Events and on-chain signals</h4>
+            <p className="text-sm text-muted-foreground">
+              Every impression and click produces a transaction (or an event) that the smart contract records. Key on-chain signals you can inspect:
+            </p>
+            <ul className="list-disc pl-5 text-sm text-muted-foreground">
+              <li><strong>Impression:</strong> recordImpression(adId, publisher)</li>
+              <li><strong>Click:</strong> recordClick(adId, publisher, userHash)</li>
+              <li><strong>Payout:</strong> transfer to publisher executed by autonomous smart contract</li>
+            </ul>
+
+            <h4 className="font-semibold">4) Local testing & free campaigns</h4>
+            <p className="text-sm text-muted-foreground">
+              For judges and demos we offer local/offline campaign creation. Hosters can create up to 3 free local campaigns without funding the on-chain escrow — this lets you demonstrate onboarding and integration without deploying a contract.
+            </p>
+
+            <h4 className="font-semibold">5) Fraud protection overview</h4>
+            <p className="text-sm text-muted-foreground">
+              The on-chain ASC enforces:
+            </p>
+            <ul className="list-disc pl-5 text-sm text-muted-foreground">
+              <li>Unique wallet checks</li>
+              <li>IP-hash cooldown windows</li>
+              <li>Duplicate-click prevention and auto-bans</li>
+              <li>Reputation score adjustments for publishers and hosters</li>
+            </ul>
+
+            <h4 className="font-semibold">6) How Massa is used</h4>
+            <p className="text-sm text-muted-foreground">
+              Massa provides three critical pieces:
+            </p>
+            <ul className="list-disc pl-5 text-sm text-muted-foreground">
+              <li><strong>DeWeb hosting</strong> to serve static frontend assets from a decentralized host.</li>
+              <li><strong>ASC (Autonomous Smart Contracts)</strong> for scheduled payouts and automated enforcement without centralized operators.</li>
+              <li><strong>On-chain storage</strong> of campaign metadata, budgets, and tamper-evident logs of impressions and clicks.</li>
+            </ul>
+
+            <h4 className="font-semibold">7) Production checklist</h4>
+            <ol className="list-decimal pl-5 text-sm text-muted-foreground">
+              <li>Deploy the ASC to Massa and set <code>VITE_MASSA_CONTRACT_ADDRESS</code> in your frontend env.</li>
+              <li>Ensure RPC endpoint in <code>VITE_MASSA_RPC_URL</code> points to a reliable node.</li>
+              <li>Replace demo local campaigns by syncing the frontend to the live contract.</li>
+              <li>Review gas/fee settings in <code>client/src/lib/massa-contract.ts</code>.</li>
+              <li>Run security audit for the ASC before holding real funds.</li>
+            </ol>
+
+            <h4 className="font-semibold">8) Where to next</h4>
+            <p className="text-sm text-muted-foreground">
+              - If you need help writing the AssemblyScript smart contract ASC, I can scaffold the ad registry, escrow and simple auction logic.
+              - If you'd like, I can also add an integration test harness that simulates impressions/clicks and validates payouts end-to-end.
+            </p>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
 }
+
 

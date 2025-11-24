@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { Upload, X, File, Image as ImageIcon, Video } from 'lucide-react';
+import { Upload, X, File as FileIcon, Image as ImageIcon, Video } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -58,17 +58,16 @@ export function FileUpload({
 
   const getFileIcon = () => {
     if (!currentFile) return <Upload className="h-12 w-12 text-muted-foreground" />;
-    
-    const fileType = typeof currentFile === 'string' 
-      ? currentFile 
-      : currentFile.type;
+
+    const fileType = typeof currentFile === 'string' ? currentFile : (currentFile as any).type || '';
 
     if (fileType.includes('image')) return <ImageIcon className="h-12 w-12 text-primary" />;
     if (fileType.includes('video')) return <Video className="h-12 w-12 text-primary" />;
-    return <File className="h-12 w-12 text-primary" />;
+    return <FileIcon className="h-12 w-12 text-primary" />;
   };
 
-  const fileName = currentFile instanceof File ? currentFile.name : null;
+  const isFileObject = currentFile && typeof currentFile === 'object' && 'name' in (currentFile as any);
+  const fileName = isFileObject ? (currentFile as any).name : null;
   const hasFile = !!(currentFile || preview);
 
   return (

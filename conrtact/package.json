@@ -7,8 +7,8 @@
         "test": "asp --summary",
         "build": "massa-as-compile",
         "clean": "rimraf build",
-        "deploy": "npm run build && node src/deploy.mjs",
-        "hello": "tsx src/hello.ts",
+        "deploy": "npm run build && node --loader ts-node/esm src/deploy.ts",
+        "hello": "node --loader ts-node/esm src/hello.ts",
         "prettier": "prettier '**/src/**/*.ts' --check && as-prettier --check assembly",
         "prettier:fix": "prettier '**/src/**/*.ts' --write && as-prettier --write assembly",
         "lint": "eslint .",
@@ -34,7 +34,7 @@
         "dotenv": "^16.0.3",
         "prettier": "^2.8.1",
         "tslib": "^2.4.0",
-        "tsx": "^4.7.0",
+        "ts-node": "^10.9.2",
         "typescript": "^4.8.4"
     },
     "overrides": {

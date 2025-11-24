@@ -1,12 +1,12 @@
 {
     "targets": {
         "release": {
-            "sourceMap": false,
+            "sourceMap": true,
             "optimizeLevel": 3,
             "shrinkLevel": 3,
             "converge": true,
-            "noAssert": true,
-            "exportRuntime": false,
+            "noAssert": false,
+            "exportRuntime": true,
             "bindings": false
         }
     }

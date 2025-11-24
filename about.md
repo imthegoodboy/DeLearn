@@ -83,14 +83,9 @@ client/
 ├── index.html
 └── index.css              # Tailwind + custom styles
 
-server/
-├── app.ts                 # Express server setup
-├── routes.ts              # API route definitions
-└── storage.ts             # Data persistence layer
+ 
 
-shared/
-└── schema.ts              # Shared TypeScript types & Zod schemas
-
+ 
 smart-contract/ (Planned)
 └── assembly/              # AssemblyScript smart contracts
 ```
@@ -279,6 +274,4 @@ The platform follows modern Web3 design principles:
 
 This project is part of the Massa blockchain ecosystem. Contributions welcome!
 
-## License
-
-MIT License - See LICENSE file for details
+ 

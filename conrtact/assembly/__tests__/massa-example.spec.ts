@@ -1,8 +1,8 @@
 import { Args, stringToBytes } from '@massalabs/as-types';
-import { constructor, hello, PLATFORM_KEY } from '../contracts/main';
+import { constructor, hello, NAME_KEY } from '../contracts/main';
 import { setDeployContext, Storage } from '@massalabs/massa-as-sdk';
 
-const NAME = 'Massa DeAds Test';
+const NAME = 'Massillian';
 
 describe('SC unit tests', () => {
   beforeAll(() => {
@@ -12,14 +12,13 @@ describe('SC unit tests', () => {
     constructor(args);
   });
 
-  test('platform name is set', () => {
-    const name = Storage.get(PLATFORM_KEY);
+  test('name is set', () => {
+    const name = Storage.get(NAME_KEY);
     expect(name).toBe(NAME);
   });
 
   test('say hello', () => {
-    const expectedMessage = `Massa DeAds ready - ${NAME}`;
-    const result = hello([]);
-    expect(result).toStrictEqual(stringToBytes(expectedMessage));
+    const expectedMessage = `Hello, ${NAME}!`;
+    expect(hello([])).toStrictEqual(stringToBytes(expectedMessage));
   });
 });

@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
 import { Progress } from '@/components/ui/progress';
 import { StatsCard } from '@/components/StatsCard';
 import { FileUpload } from '@/components/FileUpload';
@@ -34,6 +35,8 @@ import {
   fetchCampaigns,
   fetchHosterProfile,
   updateCampaignStatusOnChain,
+  createLocalCampaignForOwner,
+  countLocalCampaigns,
 } from '@/lib/massa-contract';
 import { contractConfigured } from '@/lib/massa-contract';
 
@@ -58,6 +61,7 @@ export default function HosterDashboard() {
     costPerImpression: '',
   });
   const ownerAddress = account?.address ?? '';
+  const [useFreePlan, setUseFreePlan] = useState(false);
 
   const { data: allCampaigns = [], isFetching } = useQuery({
     queryKey: ['campaigns', 'hoster'],
@@ -79,9 +83,6 @@ export default function HosterDashboard() {
 
   const createCampaignMutation = useMutation({
     mutationFn: async () => {
-      if (!accountProvider) {
-        throw new Error('Connect your wallet to launch a campaign.');
-      }
       if (!formData.title || !formData.category || !formData.targetUrl) {
         throw new Error('Please fill out all required fields.');
       }
@@ -93,6 +94,26 @@ export default function HosterDashboard() {
         throw new Error('Enter a valid rate.');
       }
       const budgetValue = Number(formData.budget);
+
+      // If user chose the free plan, enforce a 3-campaign limit per hoster
+      if (useFreePlan) {
+        const existing = countLocalCampaigns(ownerAddress || 'local_hoster');
+        if (existing >= 3) {
+          throw new Error('Free plan limit reached: you can create up to 3 free campaigns.');
+        }
+        const created = await createLocalCampaignForOwner(ownerAddress || 'local_hoster', {
+          title: formData.title,
+          description: formData.description,
+          category: formData.category as any,
+          targetUrl: formData.targetUrl,
+          creativeUri: formData.creativeUrl || selectedFile?.name || '',
+          pricingModel: formData.pricingModel as any,
+          rate: formData.pricingModel === 'cpc' ? Number(formData.costPerClick) : Number(formData.costPerImpression),
+          budget: budgetValue || 0,
+        });
+        return created;
+      }
+
       if (!budgetValue || budgetValue <= 0) {
         throw new Error('Enter a valid budget in MAS.');
       }
@@ -125,6 +146,7 @@ export default function HosterDashboard() {
         costPerImpression: '',
       });
       setSelectedFile(null);
+      setUseFreePlan(false);
       queryClient.invalidateQueries({ queryKey: ['campaigns', 'hoster'] });
       queryClient.invalidateQueries({ queryKey: ['hoster-profile', ownerAddress] });
     },
@@ -554,6 +576,16 @@ export default function HosterDashboard() {
                     <SelectItem value="cpm">CPM (Cost Per 1000 Impressions)</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="flex-1">
+                  <p className="text-sm font-medium">Use free demo plan</p>
+                  <p className="text-xs text-muted-foreground">Allow posting this campaign without escrow (limit 3 free campaigns per hoster)</p>
+                </div>
+                <div>
+                  <Switch checked={useFreePlan} onCheckedChange={(v) => setUseFreePlan(Boolean(v))} />
+                </div>
               </div>
             </div>
 

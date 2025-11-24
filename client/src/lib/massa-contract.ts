@@ -149,7 +149,15 @@ function decodeDeveloper(args: Args): DeveloperProfile {
 }
 
 function cloneCampaigns(): AdCampaign[] {
-  // Return an empty list when no contract is configured to avoid showing demo campaigns.
+  // Return locally created campaigns when the contract is not configured.
+  try {
+    const raw = globalThis.localStorage?.getItem('massa_local_campaigns');
+    if (raw) {
+      return JSON.parse(raw) as AdCampaign[];
+    }
+  } catch (e) {
+    // ignore
+  }
   return [];
 }
 
@@ -221,7 +229,42 @@ export async function fetchCampaignById(id: number): Promise<AdCampaign> {
     const args = new Args().addU32(BigInt(id));
     const payload = await read('getCampaign', args);
     return decodeCampaign(payload);
-  }, () => ({ ...sampleCampaigns[0], id }));
+  }, () => {
+    // try local campaigns
+    try {
+      const raw = globalThis.localStorage?.getItem('massa_local_campaigns');
+      if (raw) {
+        const arr = JSON.parse(raw) as AdCampaign[];
+        const found = arr.find((c) => c.id === id);
+        if (found) return found;
+      }
+    } catch (e) {
+      // ignore
+    }
+    // fallback empty campaign shaped object
+    return {
+      id,
+      owner: '',
+      title: '',
+      description: '',
+      category: 'Tech',
+      imageUrl: undefined,
+      videoUrl: null,
+      htmlSnippet: null,
+      targetUrl: '',
+      creativeUri: '',
+      pricingModel: 'cpc',
+      costPerClick: 0,
+      costPerImpression: null,
+      budget: 0,
+      spent: 0,
+      status: 'active',
+      impressions: 0,
+      clicks: 0,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    } as AdCampaign;
+  });
 }
 
 export async function fetchHosterProfile(
@@ -231,7 +274,82 @@ export async function fetchHosterProfile(
     const args = address ? new Args().addString(address) : new Args();
     const payload = await read('getHosterProfile', args);
     return decodeHoster(payload);
-  }, () => fallbackHoster(address));
+  }, () => computeHosterFromLocal(address));
+}
+
+// Local campaign helpers used when the contract is not configured
+function getLocalCampaigns(): AdCampaign[] {
+  try {
+    const raw = globalThis.localStorage?.getItem('massa_local_campaigns');
+    if (!raw) return [];
+    return JSON.parse(raw) as AdCampaign[];
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveLocalCampaigns(items: AdCampaign[]) {
+  try {
+    globalThis.localStorage?.setItem('massa_local_campaigns', JSON.stringify(items));
+  } catch (e) {
+    // ignore
+  }
+}
+
+export function countLocalCampaigns(ownerAddress?: string) {
+  const all = getLocalCampaigns();
+  if (!ownerAddress) return all.length;
+  return all.filter((c) => c.owner === ownerAddress).length;
+}
+
+export async function createLocalCampaignForOwner(ownerAddress: string, input: CreateCampaignInput): Promise<AdCampaign> {
+  // create a lightweight local campaign to allow demos without a deployed contract
+  const existing = getLocalCampaigns();
+  const nextId = existing.length > 0 ? Math.max(...existing.map((c) => c.id)) + 1 : Date.now();
+  const now = Date.now();
+  const campaign: AdCampaign = {
+    id: Number(nextId),
+    owner: ownerAddress || 'local_hoster',
+    title: input.title,
+    description: input.description,
+    category: input.category as AdCampaign['category'],
+    imageUrl: undefined,
+    videoUrl: null,
+    htmlSnippet: null,
+    targetUrl: input.targetUrl,
+    creativeUri: input.creativeUri || '',
+    pricingModel: input.pricingModel as AdCampaign['pricingModel'],
+    costPerClick: input.pricingModel === 'cpc' ? input.rate : null,
+    costPerImpression: input.pricingModel === 'cpm' ? input.rate : null,
+    budget: input.budget,
+    spent: 0,
+    status: 'active',
+    impressions: 0,
+    clicks: 0,
+    createdAt: now,
+    updatedAt: now,
+  };
+  existing.unshift(campaign);
+  saveLocalCampaigns(existing);
+  return campaign;
+}
+
+// Augment fallback hoster profile with local campaigns counts
+function computeHosterFromLocal(address?: string): HosterProfile {
+  const local = getLocalCampaigns().filter((c) => (address ? c.owner === address : true));
+  const totalBudget = local.reduce((s, c) => s + (c.budget ?? 0), 0);
+  const totalSpent = local.reduce((s, c) => s + (c.spent ?? 0), 0);
+  return {
+    address: address ?? '',
+    name: '',
+    businessName: '',
+    categories: [],
+    totalBudget,
+    totalSpent,
+    activeCampaigns: local.length,
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  };
 }
 
 export async function fetchDeveloperProfile(
